@@ -11,10 +11,10 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
 
   AuthProvider() {
-    // Initialize user if already signed in
+   
     _user = _auth.currentUser;
 
-    // Listen for auth state changes
+
     _auth.authStateChanges().listen((User? user) {
       _user = user;
       notifyListeners();

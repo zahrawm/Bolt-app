@@ -12,7 +12,7 @@ class _MapHomeScreenState extends State<HomeScreen> {
   GoogleMapController? _mapController;
 
   static const CameraPosition _initialCameraPosition = CameraPosition(
-    target: LatLng(5.6037, -0.1870), 
+    target: LatLng(5.6037, -0.1870),
     zoom: 12,
   );
 
@@ -21,7 +21,6 @@ class _MapHomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-         
           GoogleMap(
             initialCameraPosition: _initialCameraPosition,
             onMapCreated: (controller) => _mapController = controller,
@@ -31,26 +30,8 @@ class _MapHomeScreenState extends State<HomeScreen> {
           ),
 
           
-          Positioned(
-            top: 40,
-            left: 20,
-            right: 20,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade600,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(
-                child: Text(
-                  "✓ 10% promo applied",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ),
 
-          // Overlay: Where to panel
+          // Bottom Sheet
           Positioned(
             bottom: 0,
             left: 0,
@@ -65,7 +46,7 @@ class _MapHomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Search bar & schedule
+                  // Search Bar
                   Row(
                     children: [
                       Expanded(
@@ -86,31 +67,55 @@ class _MapHomeScreenState extends State<HomeScreen> {
                       IconButton(
                         icon: const Icon(Icons.schedule, color: Colors.green),
                         onPressed: () {},
-                      )
+                      ),
                     ],
                   ),
 
                   const SizedBox(height: 20),
 
-                  // Bolt options
+                  // Bolt options with Expanded to fix overflow
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _optionBox(Icons.fastfood, "Bolt Food", "Fast delivery"),
-                      _optionBox(Icons.local_shipping, "Bolt Send", "Parcel delivery"),
+                      Expanded(
+                        child: _optionBox(
+                          Icons.fastfood,
+                          "Bolt Food",
+                          "Fast delivery",
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _optionBox(
+                          Icons.local_shipping,
+                          "Bolt Send",
+                          "Parcel delivery",
+                        ),
+                      ),
                     ],
                   ),
 
                   const SizedBox(height: 20),
 
-                  // Recent locations
-                  _locationTile(Icons.access_time, "Circle VIP Bus Terminal", "Ring Road Central, Accra"),
-                  _locationTile(Icons.shopping_bag, "Accra Mall", "Spintex Road, Accra"),
-                  _locationTile(Icons.directions_bus, "Madina Zongo Junction", "Ga"),
+                  // Recent Locations
+                  _locationTile(
+                    Icons.access_time,
+                    "Circle VIP Bus Terminal",
+                    "Ring Road Central, Accra",
+                  ),
+                  _locationTile(
+                    Icons.shopping_bag,
+                    "Accra Mall",
+                    "Spintex Road, Accra",
+                  ),
+                  _locationTile(
+                    Icons.directions_bus,
+                    "Madina Zongo Junction",
+                    "Ga",
+                  ),
 
                   const SizedBox(height: 10),
 
-                  // Always arrive on time
+                  // Calendar Feature
                   ListTile(
                     leading: Container(
                       decoration: BoxDecoration(
@@ -118,9 +123,18 @@ class _MapHomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       padding: const EdgeInsets.all(6),
-                      child: const Icon(Icons.calendar_today, color: Colors.green),
+                      child: const Icon(
+                        Icons.calendar_today,
+                        color: Colors.green,
+                      ),
                     ),
-                    title: const Text("Always arrive on time", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                    title: const Text(
+                      "Always arrive on time",
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     subtitle: const Text("Calendar connection makes it easy"),
                     onTap: () {},
                   ),
@@ -130,11 +144,16 @@ class _MapHomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+
+      // Bottom Navigation
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "Rides"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: "Rides",
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
         ],
       ),
@@ -142,12 +161,24 @@ class _MapHomeScreenState extends State<HomeScreen> {
   }
 
   Widget _optionBox(IconData icon, String title, String subtitle) {
-    return Column(
-      children: [
-        Icon(icon, size: 32),
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 32, color: Colors.green),
+          const SizedBox(height: 8),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:bolt_app/screen/location_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -29,9 +30,6 @@ class _MapHomeScreenState extends State<HomeScreen> {
             zoomControlsEnabled: false,
           ),
 
-          
-
-          // Bottom Sheet
           Positioned(
             bottom: 0,
             left: 0,
@@ -46,23 +44,35 @@ class _MapHomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Search Bar
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.search),
-                            hintText: "Where to?",
-                            filled: true,
-                            fillColor: Colors.grey[200],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LocationScreen(),
+                              ),
+                            );
+                          },
+                          child: AbsorbPointer(
+                            child: TextField(
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Icons.search),
+                                hintText: "Where to?",
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
+
                       const SizedBox(width: 10),
                       IconButton(
                         icon: const Icon(Icons.schedule, color: Colors.green),
@@ -73,7 +83,6 @@ class _MapHomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Bolt options with Expanded to fix overflow
                   Row(
                     children: [
                       Expanded(
@@ -96,7 +105,6 @@ class _MapHomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Recent Locations
                   _locationTile(
                     Icons.access_time,
                     "Circle VIP Bus Terminal",
@@ -115,7 +123,6 @@ class _MapHomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 10),
 
-                  // Calendar Feature
                   ListTile(
                     leading: Container(
                       decoration: BoxDecoration(
@@ -145,11 +152,14 @@ class _MapHomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      // Bottom Navigation
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home), 
+            label: 'Home',
+          ),
+
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: "Rides",

@@ -11,9 +11,7 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
 
   AuthProvider() {
-   
     _user = _auth.currentUser;
-
 
     _auth.authStateChanges().listen((User? user) {
       _user = user;

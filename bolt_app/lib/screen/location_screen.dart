@@ -1,4 +1,5 @@
-import 'package:bolt_app/widgets/map.dart';
+import 'package:bolt_app/screen/map_screen.dart';
+
 import 'package:flutter/material.dart';
 
 class LocationScreen extends StatelessWidget {
@@ -50,11 +51,6 @@ class LocationScreen extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-          ListTile(
-            leading: Icon(Icons.radio_button_unchecked),
-            title: Text('Destination', style: TextStyle()),
-            onTap: () {},
           ),
         ],
       ),

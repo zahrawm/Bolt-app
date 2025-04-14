@@ -18,7 +18,7 @@ class _MapHomeScreenState extends State<HomeScreen> {
 
   static const CameraPosition _initialCameraPosition = CameraPosition(
     target: LatLng(5.6037, -0.1870),
-    zoom: 12,
+    zoom: 9,
   );
 
   @override
@@ -91,89 +91,8 @@ class _MapHomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 20),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _optionBox(
-                    Icons.fastfood,
-                    "Bolt Food",
-                    "Fast delivery",
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _optionBox(
-                    Icons.local_shipping,
-                    "Bolt Send",
-                    "Parcel delivery",
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            _locationTile(
-              Icons.access_time,
-              "Circle VIP Bus Terminal",
-              "Ring Road Central, Accra",
-            ),
-            _locationTile(
-              Icons.shopping_bag,
-              "Accra Mall",
-              "Spintex Road, Accra",
-            ),
-            _locationTile(
-              Icons.directions_bus,
-              "Madina Zongo Junction",
-              "Greater Accra",
-            ),
-
-            const SizedBox(height: 10),
-
-            ListTile(
-              leading: Container(
-                decoration: BoxDecoration(
-                  color: Colors.green[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.all(6),
-                child: const Icon(Icons.calendar_today, color: Colors.green),
-              ),
-              title: const Text(
-                "Always arrive on time",
-                style: TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: const Text("Calendar connection makes it easy"),
-              onTap: () {},
-            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _optionBox(IconData icon, String title, String subtitle) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 32, color: Colors.green),
-          const SizedBox(height: 8),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-        ],
       ),
     );
   }

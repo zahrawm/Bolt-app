@@ -1,6 +1,8 @@
 import 'package:bolt_app/provider/auth_provider.dart';
+import 'package:bolt_app/provider/theme_provider.dart';
 import 'package:bolt_app/screen/home_screen.dart';
 import 'package:bolt_app/screen/login_screen.dart';
+import 'package:bolt_app/screen/otp_screen.dart';
 import 'package:bolt_app/screen/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +15,10 @@ void main() async {
 
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -35,6 +40,7 @@ class MyApp extends StatelessWidget {
         '/': (_) => const SplashScreen(),
         '/login': (_) => const LoginScreen(),
         '/home': (_) => const HomeScreen(),
+        '/otp': (_) => const OtpScreen(),
       },
     );
   }

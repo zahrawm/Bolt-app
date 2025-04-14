@@ -9,6 +9,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    TextEditingController phoneController = TextEditingController();
 
     return Scaffold(
       backgroundColor: const Color(0xFF32D16D),
@@ -43,7 +44,7 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-
+ 
             const Text(
               'New to Bolt? Enjoy up to 50% off on your first\nride-hailing trips!',
               textAlign: TextAlign.center,
@@ -90,6 +91,7 @@ class LoginScreen extends StatelessWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: TextField(
+                            controller: phoneController,
                             keyboardType: TextInputType.phone,
                             decoration: InputDecoration(
                               hintText: 'Phone number',

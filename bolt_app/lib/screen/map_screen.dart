@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
 
 import 'package:bolt_app/widgets/button.dart';
 
@@ -48,12 +49,35 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     }
   }
 
+  Future<BitmapDescriptor> _resizeImageAsset(
+    String path,
+    int width,
+    int height,
+  ) async {
+    final ByteData data = await rootBundle.load(path);
+
+    ui.Codec codec = await ui.instantiateImageCodec(
+      data.buffer.asUint8List(),
+      targetWidth: width,
+      targetHeight: height,
+    );
+
+    ui.FrameInfo fi = await codec.getNextFrame();
+
+    final ByteData? byteData = await fi.image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+
+    if (byteData != null) {
+      return BitmapDescriptor.fromBytes(byteData.buffer.asUint8List());
+    } else {
+      throw Exception('Failed to resize image');
+    }
+  }
+
   void _setCustomPersonIcon() async {
-    // Load the image directly from assets
     try {
-      final ByteData byteData = await rootBundle.load('assets/man.png');
-      final Uint8List byteList = byteData.buffer.asUint8List();
-      personIcon = BitmapDescriptor.fromBytes(byteList);
+      personIcon = await _resizeImageAsset('assets/manpng', 40, 40);
       _updateMarkers();
     } catch (e) {
       print('Error loading custom icon: $e');
@@ -71,7 +95,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   void _updateMarkers() {
     setState(() {
       _markers = {
-        // Selected location marker
         Marker(
           markerId: MarkerId("selected-location"),
           position: selectedLocation,
@@ -79,7 +102,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
           onDragEnd: _onMapTapped,
           icon: BitmapDescriptor.defaultMarker,
         ),
-        // User location marker with person icon
         Marker(
           markerId: MarkerId("user-location"),
           position: userLocation,
@@ -132,7 +154,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   void initState() {
     super.initState();
 
-    
     _setCustomPersonIcon();
 
     _updateMarkers();

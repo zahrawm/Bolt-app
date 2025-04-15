@@ -15,11 +15,36 @@ class HomeScreen extends StatefulWidget {
 
 class _MapHomeScreenState extends State<HomeScreen> {
   GoogleMapController? _mapController;
+  String selectedLocationText = "Where to?";
+  LatLng? selectedDestination;
+  Set<Marker> _markers = {};
+  Set<Polyline> _polylines = {};
 
   static const CameraPosition _initialCameraPosition = CameraPosition(
     target: LatLng(5.6037, -0.1870),
     zoom: 9,
   );
+
+  void _updateMapWithLocation(LatLng location, String address) {
+    setState(() {
+      selectedDestination = location;
+      selectedLocationText = address;
+
+      _markers = {
+        Marker(
+          markerId: const MarkerId("destination"),
+          position: location,
+          infoWindow: InfoWindow(title: address),
+        ),
+      };
+
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: location, zoom: 14),
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +57,8 @@ class _MapHomeScreenState extends State<HomeScreen> {
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
             zoomControlsEnabled: false,
+            markers: _markers,
+            polylines: _polylines,
           ),
           _buildBottomSheet(context),
         ],
@@ -59,19 +86,29 @@ class _MapHomeScreenState extends State<HomeScreen> {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => LocationScreen(),
                         ),
                       );
+
+                      if (result != null && result is Map<String, dynamic>) {
+                        if (result.containsKey('location') &&
+                            result.containsKey('address')) {
+                          _updateMapWithLocation(
+                            result['location'] as LatLng,
+                            result['address'] as String,
+                          );
+                        }
+                      }
                     },
                     child: AbsorbPointer(
                       child: TextField(
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.search),
-                          hintText: "Where to?",
+                          hintText: selectedLocationText,
                           filled: true,
                           fillColor: Colors.grey[200],
                           border: OutlineInputBorder(
@@ -90,6 +127,36 @@ class _MapHomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
+            if (selectedDestination != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on, color: Colors.green),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            selectedLocationText,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '${selectedDestination!.latitude.toStringAsFixed(5)}, ${selectedDestination!.longitude.toStringAsFixed(5)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 20),
           ],
         ),
@@ -116,14 +183,13 @@ class _MapHomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildNavItem(Icons.home, "Home", Colors.grey, () {}),
+              _buildNavItem(Icons.home, "Home", Colors.green, () {}),
               _buildNavItem(Icons.calendar_today, "Rides", Colors.grey, () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const RidesScreen()),
                 );
               }),
-
               _buildNavItem(Icons.person, "Account", Colors.grey, () {
                 Navigator.push(
                   context,

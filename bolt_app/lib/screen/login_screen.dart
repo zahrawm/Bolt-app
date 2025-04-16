@@ -44,7 +44,7 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
- 
+
             const Text(
               'New to Bolt? Enjoy up to 50% off on your first\nride-hailing trips!',
               textAlign: TextAlign.center,

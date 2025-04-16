@@ -247,7 +247,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
 
   void _setCustomPersonIcon() async {
     try {
-      personIcon = await _resizeImageAsset('assets/man.png', 40, 40);
+      personIcon = await _resizeImageAsset('assets/bolt.jpg', 35, 35);
       _updateMarkers();
     } catch (e) {
       print('Error loading custom icon: $e');

@@ -263,7 +263,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   }
 
   void _updateMarkers() {
-    setState(() {
+    setState(() { 
       _markers = {
         Marker(
           markerId: MarkerId("selected-location"),

@@ -3,21 +3,97 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _phoneController = TextEditingController();
+  String _countryCode = '+233'; // Default to Ghana
+  bool _phoneVerified = false;
+  bool _isVerifying = false;
+  String? _phoneError;
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneController.addListener(_validatePhoneNumber);
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  void _validatePhoneNumber() {
+    // Reset verification state when phone number changes
+    if (_phoneVerified) {
+      setState(() {
+        _phoneVerified = false;
+        _phoneError = null;
+      });
+    }
+
+    // Only check if there's enough characters to be a valid number
+    if (_phoneController.text.length >= 9) {
+      _attemptVerification();
+    } else if (_phoneController.text.isNotEmpty) {
+      setState(() {
+        _phoneError = 'Enter a valid phone number';
+      });
+    } else {
+      setState(() {
+        _phoneError = null;
+      });
+    }
+  }
+
+  Future<void> _attemptVerification() async {
+    // Don't re-verify if already verifying
+    if (_isVerifying) return;
+
+    setState(() {
+      _isVerifying = true;
+      _phoneError = 'Verifying phone number...';
+    });
+
+    // Short delay to simulate verification
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    // For demo purposes, always succeed with valid phone number format
+    // In a real app, this would make a call to your AuthProvider
+    setState(() {
+      _phoneVerified = true;
+      _phoneError = null;
+      _isVerifying = false;
+    });
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Phone number verified successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 1),
+        ),
+      );
+      Future.delayed(const Duration(seconds: 1), () {
+        Navigator.pushReplacementNamed(context, '/home');
+      });
+    }
+  }
+  @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    TextEditingController phoneController = TextEditingController();
-
     return Scaffold(
       backgroundColor: const Color(0xFF32D16D),
       body: SafeArea(
         child: Column(
           children: [
             const SizedBox(height: 20),
-
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -80,8 +156,14 @@ class LoginScreen extends StatelessWidget {
                             border: Border.all(color: Colors.grey.shade300),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const CountryCodePicker(
-                            onChanged: print,
+                          child: CountryCodePicker(
+                            onChanged: (CountryCode code) {
+                              setState(() {
+                                _countryCode = code.dialCode ?? '+233';
+                               
+                                _phoneVerified = false;
+                              });
+                            },
                             initialSelection: 'GH',
                             favorite: ['+233', 'GH'],
                             showCountryOnly: false,
@@ -90,9 +172,15 @@ class LoginScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: TextField(
-                            controller: phoneController,
+                          child: TextFormField(
+                            controller: _phoneController,
                             keyboardType: TextInputType.phone,
+                            onEditingComplete: () {
+                              if (_phoneController.text.length >= 9) {
+                                
+                                _attemptVerification();
+                              }
+                            },
                             decoration: InputDecoration(
                               hintText: 'Phone number',
                               filled: true,
@@ -101,12 +189,36 @@ class LoginScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
+                              errorText: _phoneError,
+                              errorStyle: TextStyle(
+                                color: _isVerifying ? Colors.blue : Colors.red,
+                              ),
+                              suffixIcon:
+                                  _isVerifying
+                                      ? const SizedBox(
+                                        height: 16,
+                                        width: 16,
+                                        child: Padding(
+                                          padding: EdgeInsets.all(10),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Color(0xFF32D16D),
+                                          ),
+                                        ),
+                                      )
+                                      : _phoneVerified
+                                      ? const Icon(
+                                        Icons.check_circle,
+                                        color: Color(0xFF32D16D),
+                                      )
+                                      : null,
                             ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
+
                     const Center(
                       child: Text('OR', style: TextStyle(color: Colors.grey)),
                     ),

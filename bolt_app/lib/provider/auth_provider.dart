@@ -10,6 +10,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   String? _verificationId;
+  bool _phoneNumberVerified = false;
 
   AuthProvider() {
     _user = _auth.currentUser;
@@ -23,6 +24,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
   String? get errorMessage => _errorMessage;
+  bool get phoneNumberVerified => _phoneNumberVerified;
 
   void _setLoading(bool loading) {
     _isLoading = loading;
@@ -62,5 +64,91 @@ class AuthProvider extends ChangeNotifier {
       _setError(e.toString());
       return false;
     }
+  }
+
+  Future<bool> verifyPhoneNumber(String phoneNumber) async {
+    try {
+      _setLoading(true);
+      _setError(null);
+
+      UserCredential userCredential = await _auth.signInAnonymously();
+
+      await userCredential.user?.updatePhoneNumber(
+        PhoneAuthProvider.credential(
+          verificationId: 'development-verification-id',
+          smsCode: '123456',
+        ),
+      );
+
+      _phoneNumberVerified = true;
+
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _setLoading(false);
+      _setError(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> linkPhoneNumber(String phoneNumber) async {
+    try {
+      _setLoading(true);
+      _setError(null);
+
+      if (_user == null) {
+        await _auth.signInAnonymously();
+      }
+
+      await _auth.currentUser?.updateDisplayName(phoneNumber);
+
+      _phoneNumberVerified = true;
+
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _setLoading(false);
+      _setError(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> signInWithPhoneNumberCustomFlow(String phoneNumber) async {
+    try {
+      _setLoading(true);
+      _setError(null);
+
+      await Future.delayed(const Duration(seconds: 2));
+
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: 'simulated-verification',
+        smsCode: '000000',
+      );
+
+      await _auth.signInWithCredential(credential);
+
+      _phoneNumberVerified = true;
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _setLoading(false);
+      _setError(e.toString());
+      return false;
+    }
+  }
+
+  Future<void> signOut() async {
+    try {
+      await _googleSignIn.signOut();
+      await _auth.signOut();
+      _phoneNumberVerified = false;
+    } catch (e) {
+      _setError(e.toString());
+    }
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
   }
 }

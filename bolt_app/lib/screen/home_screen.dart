@@ -89,9 +89,7 @@ class _MapHomeScreenState extends State<HomeScreen> {
                     onTap: () async {
                       final result = await Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => LocationScreen(),
-                        ),
+                        MaterialPageRoute(builder: (_) => LocationScreen()),
                       );
 
                       if (result != null && result is Map<String, dynamic>) {
@@ -127,39 +125,72 @@ class _MapHomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            if (selectedDestination != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 16.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.location_on, color: Colors.green),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            selectedLocationText,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            '${selectedDestination!.latitude.toStringAsFixed(5)}, ${selectedDestination!.longitude.toStringAsFixed(5)}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCategory(
+                    Icons.fastfood,
+                    "Bolt Food",
+                    "Fast delivery",
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildCategory(
+                    Icons.local_shipping,
+                    "Bolt Send",
+                    "Parcel delivery",
+                  ),
+                ),
+              ],
+            ),
+
             const SizedBox(height: 20),
+
+            _locationTile(
+              Icons.access_time,
+              'Circle VIP Bus Terminal',
+              'Ring Road Central, Accra',
+            ),
+            _locationTile(
+              Icons.shopping_bag,
+              'Accra Mall',
+              'Spintex Road, Accra',
+            ),
+            _locationTile(Icons.directions_bus, 'Madina Zongo Junction', 'Ga'),
+            const Divider(height: 32),
+
+            _calendarTile(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCategory(IconData icon, String title, String subtitle) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 28),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -169,6 +200,19 @@ class _MapHomeScreenState extends State<HomeScreen> {
       leading: Icon(icon, color: Colors.black54),
       title: Text(title),
       subtitle: Text(subtitle),
+      onTap: () {},
+    );
+  }
+
+  Widget _calendarTile() {
+    return ListTile(
+      leading: const Icon(Icons.calendar_today, color: Colors.green),
+      title: const Text(
+        "Always arrive on time",
+        style: TextStyle(color: Colors.green),
+      ),
+      subtitle: const Text("Calendar connection makes it easy"),
+
       onTap: () {},
     );
   }
@@ -187,23 +231,19 @@ class _MapHomeScreenState extends State<HomeScreen> {
               _buildNavItem(Icons.calendar_today, "Rides", Colors.grey, () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const RidesScreen()),
+                  MaterialPageRoute(builder: (_) => const RidesScreen()),
                 );
               }),
               _buildNavItem(Icons.person, "Account", Colors.grey, () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const AccountScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const AccountScreen()),
                 );
               }),
               _buildNavItem(Icons.settings, "Settings", Colors.grey, () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
                 );
               }),
             ],

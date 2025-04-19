@@ -231,7 +231,9 @@ class _MapHomeScreenState extends State<HomeScreen> {
               _buildNavItem(Icons.calendar_today, "Rides", Colors.grey, () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const RidesScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const UserHomePage(userId: ''),
+                  ),
                 );
               }),
               _buildNavItem(Icons.person, "Account", Colors.grey, () {

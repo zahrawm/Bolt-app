@@ -85,6 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -160,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onChanged: (CountryCode code) {
                               setState(() {
                                 _countryCode = code.dialCode ?? '+233';
-                               
+
                                 _phoneVerified = false;
                               });
                             },
@@ -177,7 +178,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             keyboardType: TextInputType.phone,
                             onEditingComplete: () {
                               if (_phoneController.text.length >= 9) {
-                                
                                 _attemptVerification();
                               }
                             },

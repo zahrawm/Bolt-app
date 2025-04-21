@@ -173,7 +173,7 @@ class AuthProvider extends ChangeNotifier {
       await _auth.signOut();
       _user = null;
       _phoneNumberVerified = false;
-      notifyListeners(); // Notify listeners about the sign-out
+      notifyListeners(); 
     } catch (e) {
       _setError(e.toString());
     }

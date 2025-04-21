@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
@@ -5,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:async';
 import 'package:intl/intl.dart' as intl;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class UserHomePage extends StatefulWidget {
   final String userId;
@@ -35,8 +37,8 @@ class _UserHomePageState extends State<UserHomePage> {
   void initState() {
     super.initState();
 
-    // Use a short delay to ensure the widget is fully mounted
-    Future.delayed(Duration(milliseconds: 300), () {
+    // Give a bit more time on web platforms
+    Future.delayed(Duration(milliseconds: kIsWeb ? 1000 : 300), () {
       if (mounted) {
         _initializeLocationServices();
       }
@@ -76,7 +78,16 @@ class _UserHomePageState extends State<UserHomePage> {
             action: SnackBarAction(
               label: 'Settings',
               onPressed: () {
-                Geolocator.openLocationSettings();
+                if (kIsWeb) {
+                  // For web, just show a message since we can't directly open settings
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Please enable location in your browser settings'),
+                    ),
+                  );
+                } else {
+                  Geolocator.openLocationSettings();
+                }
               },
             ),
           ),
@@ -107,12 +118,22 @@ class _UserHomePageState extends State<UserHomePage> {
           locationStatus = "Requesting location permission...";
         });
 
+        // For web platforms, show a more descriptive message
+        if (kIsWeb) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please allow location access in the browser prompt'),
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+
         permission = await Geolocator.requestPermission();
 
         if (permission == LocationPermission.denied) {
           setState(() {
             locationStatus =
-                "Location permission denied. Please enable location permissions in app settings.";
+                "Location permission denied. Please enable location permissions in browser settings.";
             isLoading = false;
           });
 
@@ -123,7 +144,16 @@ class _UserHomePageState extends State<UserHomePage> {
               action: SnackBarAction(
                 label: 'Settings',
                 onPressed: () {
-                  Geolocator.openAppSettings();
+                  if (!kIsWeb) {
+                    Geolocator.openAppSettings();
+                  } else {
+                    // For web, just show instructions
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Click the location icon in your browser address bar and allow access'),
+                      ),
+                    );
+                  }
                 },
               ),
             ),
@@ -135,7 +165,7 @@ class _UserHomePageState extends State<UserHomePage> {
       if (permission == LocationPermission.deniedForever) {
         setState(() {
           locationStatus =
-              "Location permissions are permanently denied. Please enable them in app settings.";
+              "Location permissions are permanently denied. Please enable them in browser settings.";
           isLoading = false;
         });
 
@@ -146,7 +176,17 @@ class _UserHomePageState extends State<UserHomePage> {
             action: SnackBarAction(
               label: 'Settings',
               onPressed: () {
-                Geolocator.openAppSettings();
+                if (!kIsWeb) {
+                  Geolocator.openAppSettings();
+                } else {
+                  // For web, provide specific instructions for Chrome
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('In Chrome, click the lock icon in the address bar → Site settings → Allow location'),
+                      duration: Duration(seconds: 8),
+                    ),
+                  );
+                }
               },
             ),
           ),
@@ -157,8 +197,7 @@ class _UserHomePageState extends State<UserHomePage> {
       setState(() {
         locationStatus = "Location permission granted. Getting position...";
       });
-      
-      // If we got here, we have permission - start location tracking
+
       _startLocationTracking();
     } catch (e) {
       setState(() {
@@ -177,75 +216,116 @@ class _UserHomePageState extends State<UserHomePage> {
       locationStatus = "Getting current position...";
     });
 
-    // Try to get current position with improved error handling
-    _getCurrentPositionWithFallbacks()
-      .then((position) {
-        if (position != null) {
-          _handleNewPosition(position);
-        } else {
-          setState(() {
-            locationStatus = "Unable to determine your location. Please try again.";
-            isLoading = false;
-          });
-        }
-      });
+    // For web, use specific settings
+    _getCurrentPositionWithFallbacks().then((position) {
+      if (position != null) {
+        _handleNewPosition(position);
+      } else {
+        setState(() {
+          locationStatus =
+              "Unable to determine your location. Please try again and ensure location access is allowed in your browser.";
+          isLoading = false;
+        });
+      }
+    });
 
-    // Set up position stream for continuous updates
+    // Set up position stream with appropriate settings for web
     try {
+      // Different settings for web vs. mobile
+      LocationSettings locationSettings = kIsWeb
+          ? LocationSettings(
+              accuracy: LocationAccuracy.high,
+            )
+          : LocationSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 10,
+            );
+
       positionStream = Geolocator.getPositionStream(
-        locationSettings: LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-        ),
+        locationSettings: locationSettings,
       ).listen(
         (Position position) {
           _handleNewPosition(position);
         },
         onError: (e) {
           print("Position stream error: $e");
-          // Don't set isLoading to false here to avoid interfering with other operations
+          // Show error to user so they're aware
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Location stream error: $e. Will try to recover.'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
         },
       );
     } catch (e) {
       print("Error setting up position stream: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error tracking location: $e')),
+        );
+      }
     }
   }
 
-  // New method to handle position acquisition with multiple fallbacks
+  // Modified method for web support
   Future<Position?> _getCurrentPositionWithFallbacks() async {
-    // Try with high accuracy first
-    try {
-      return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 15),
-      );
-    } catch (e) {
-      print("High accuracy position failed: $e");
-      
-      // Try with reduced accuracy
+    // Web-specific settings
+    if (kIsWeb) {
       try {
+        // On web, we need to be more patient with the timeout
         return await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.reduced,
-          timeLimit: Duration(seconds: 10),
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 20),
         );
       } catch (e) {
-        print("Reduced accuracy position failed: $e");
+        print("Web high accuracy position failed: $e");
         
-        // Try with lowest accuracy
         try {
+          // Try with lowest accuracy on web
           return await Geolocator.getCurrentPosition(
             desiredAccuracy: LocationAccuracy.lowest,
-            timeLimit: Duration(seconds: 8),
+            timeLimit: Duration(seconds: 15),
           );
         } catch (e) {
-          print("Lowest accuracy position failed: $e");
-          
-          // Last resort: try to get last known position
+          print("Web lowest accuracy position failed: $e");
+          return null;
+        }
+      }
+    } else {
+      // Mobile fallback logic
+      try {
+        return await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 15),
+        );
+      } catch (e) {
+        print("High accuracy position failed: $e");
+
+        try {
+          return await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.reduced,
+            timeLimit: Duration(seconds: 10),
+          );
+        } catch (e) {
+          print("Reduced accuracy position failed: $e");
+
           try {
-            return await Geolocator.getLastKnownPosition();
+            return await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.lowest,
+              timeLimit: Duration(seconds: 8),
+            );
           } catch (e) {
-            print("Last known position failed: $e");
-            return null;
+            print("Lowest accuracy position failed: $e");
+
+            try {
+              return await Geolocator.getLastKnownPosition();
+            } catch (e) {
+              print("Last known position failed: $e");
+              return null;
+            }
           }
         }
       }
@@ -274,6 +354,11 @@ class _UserHomePageState extends State<UserHomePage> {
     if (mapController != null) {
       _animateToCurrentLocation();
     }
+    
+    // Debug for web users
+    if (kIsWeb) {
+      print("Web location: ${position.latitude}, ${position.longitude}, accuracy: ${position.accuracy}m");
+    }
   }
 
   Future<void> _getAddressFromLatLng(Position position) async {
@@ -282,11 +367,12 @@ class _UserHomePageState extends State<UserHomePage> {
         currentAddress = "Fetching address...";
       });
 
+      // For web, we might need a longer timeout
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
       ).timeout(
-        Duration(seconds: 10),
+        Duration(seconds: kIsWeb ? 15 : 10),
         onTimeout: () {
           throw TimeoutException("Address lookup timed out");
         },
@@ -344,6 +430,7 @@ class _UserHomePageState extends State<UserHomePage> {
     setState(() {
       _markers.clear();
 
+      // User marker with exact coordinates shown in the info window
       _markers.add(
         Marker(
           markerId: MarkerId('user'),
@@ -353,7 +440,7 @@ class _UserHomePageState extends State<UserHomePage> {
           ),
           infoWindow: InfoWindow(
             title: 'Your Location',
-            snippet: currentAddress,
+            snippet: 'Lat: ${coordFormat.format(currentPosition!.latitude)}, Lng: ${coordFormat.format(currentPosition!.longitude)}',
           ),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
         ),
@@ -409,6 +496,8 @@ class _UserHomePageState extends State<UserHomePage> {
             "address": currentAddress,
             "isOnline": true,
             "lastUpdated": FieldValue.serverTimestamp(),
+            "accuracy": position.accuracy, // Store accuracy for debugging
+            "locationSource": kIsWeb ? "web" : "mobile", // Track source
           }, SetOptions(merge: true));
     } catch (e) {
       print("Error updating Firestore: $e");
@@ -483,7 +572,7 @@ class _UserHomePageState extends State<UserHomePage> {
       print("Error fetching drivers: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error fetching nearby drivers'))
+          SnackBar(content: Text('Error fetching nearby drivers')),
         );
       }
     }
@@ -542,8 +631,7 @@ class _UserHomePageState extends State<UserHomePage> {
         mapController = controller;
         mapLoadError = false;
       });
-      
-      // Try to animate to current position if available
+
       if (currentPosition != null) {
         _animateToCurrentLocation();
       }
@@ -552,7 +640,7 @@ class _UserHomePageState extends State<UserHomePage> {
       setState(() {
         mapLoadError = true;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -591,6 +679,14 @@ class _UserHomePageState extends State<UserHomePage> {
               onPressed: _initializeLocationServices,
               child: Text("Try Again"),
             ),
+            if (kIsWeb) ...[
+              SizedBox(height: 16),
+              Text(
+                "Make sure you allow location access in your browser", 
+                textAlign: TextAlign.center,
+                style: TextStyle(fontStyle: FontStyle.italic),
+              ),
+            ],
           ],
         ),
       );
@@ -628,7 +724,6 @@ class _UserHomePageState extends State<UserHomePage> {
       myLocationButtonEnabled: true,
       mapToolbarEnabled: true,
       onMapCreated: _onMapCreated,
-      // Removed the problematic onError parameter
       zoomControlsEnabled: true,
       compassEnabled: true,
     );
@@ -662,6 +757,7 @@ class _UserHomePageState extends State<UserHomePage> {
         children: [
           Expanded(flex: 1, child: _buildMapView()),
 
+          // Location info with more detailed accuracy information
           Container(
             padding: EdgeInsets.all(16),
             color: Colors.grey[200],
@@ -678,11 +774,17 @@ class _UserHomePageState extends State<UserHomePage> {
                   currentPosition == null ? locationStatus : currentAddress,
                   style: TextStyle(fontSize: 14),
                 ),
-                if (currentPosition != null)
+                if (currentPosition != null) ...[
                   Text(
                     "Coordinates: ${coordFormat.format(currentPosition!.latitude)}, ${coordFormat.format(currentPosition!.longitude)}",
                     style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                   ),
+                  // Add accuracy information which is helpful for web debugging
+                  Text(
+                    "Accuracy: ±${currentPosition!.accuracy.toStringAsFixed(1)} meters",
+                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                  ),
+                ],
               ],
             ),
           ),
@@ -815,26 +917,89 @@ class _UserHomePageState extends State<UserHomePage> {
             child: Icon(Icons.refresh),
             onPressed: () {
               if (currentPosition != null) {
-                _getCurrentPositionWithFallbacks()
-                  .then((position) {
-                    if (position != null) {
-                      _handleNewPosition(position);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Location updated')),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to update location')),
-                      );
-                    }
-                  });
+                _getCurrentPositionWithFallbacks().then((position) {
+                  if (position != null) {
+                    _handleNewPosition(position);
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Location updated')));
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to update location')),
+                    );
+                  }
+                });
               } else {
                 _initializeLocationServices();
               }
             },
           ),
+          // Add a new button specifically for web users to get high accuracy
+          if (kIsWeb)
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: FloatingActionButton(
+                heroTag: "webHighAccuracy",
+                backgroundColor: Colors.orange,
+                child: Icon(Icons.gps_fixed),
+                onPressed: () async {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Requesting high accuracy location...')),
+                  );
+                  try {
+                    Position position = await Geolocator.getCurrentPosition(
+                      desiredAccuracy: LocationAccuracy.bestForNavigation,
+                      timeLimit: Duration(seconds: 25),
+                    );
+                    _handleNewPosition(position);
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                },
+              ),
+            ),
         ],
       ),
+      // Add a Chrome-specific debug panel for web
+      persistentFooterButtons: kIsWeb ? [
+        TextButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                title: Text("Web Location Debug"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("To get exact location in Chrome:"),
+                    SizedBox(height: 8),
+                    Text("1. Ensure you've allowed location access"),
+                    Text("2. Check that Chrome has precise location enabled in your OS settings"),
+                    Text("3. Try the high accuracy button (orange)"),
+                    if (currentPosition != null) ...[
+                      SizedBox(height: 16),
+                      Text("Current Data:"),
+                      Text("Lat: ${currentPosition!.latitude}"),
+                      Text("Lng: ${currentPosition!.longitude}"),
+                      Text("Accuracy: ±${currentPosition!.accuracy}m"),
+                    ],
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("OK"),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: Text("Web Location Help"),
+        ),
+      ] : null,
     );
   }
-} 
+}

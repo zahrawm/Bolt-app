@@ -18,11 +18,11 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider() {
     _auth.authStateChanges().listen((User? user) {
       _user = user;
-      _updateUserData(user); 
+      _updateUserData(user);
       notifyListeners();
     });
     _user = _auth.currentUser;
-    _updateUserData(_user); 
+    _updateUserData(_user);
   }
 
   User? get user => _user;
@@ -38,6 +38,7 @@ class AuthProvider extends ChangeNotifier {
 
   void _setError(String? error) {
     _errorMessage = error;
+    debugPrint('Auth Error: $error');
     notifyListeners();
   }
 
@@ -51,7 +52,8 @@ class AuthProvider extends ChangeNotifier {
           'photoURL': user.photoURL,
           'phoneNumberVerified': _phoneNumberVerified,
           'lastSignIn': DateTime.now(),
-        }, SetOptions(merge: true)); 
+        }, SetOptions(merge: true));
+        debugPrint('User data updated in Firestore for UID: ${user.uid}');
       } catch (e) {
         debugPrint("Error updating user data in Firestore: $e");
       }
@@ -66,6 +68,7 @@ class AuthProvider extends ChangeNotifier {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         _setLoading(false);
+        _setError("Google sign-in was cancelled.");
         return false;
       }
 
@@ -77,16 +80,25 @@ class AuthProvider extends ChangeNotifier {
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
       _user = userCredential.user;
-      await _updateUserData(_user);
 
+      if (_user == null) {
+        _setLoading(false);
+        _setError("User ID cannot be found after Google Sign-In.");
+        return false;
+      }
+
+      debugPrint("Signed in with Google: UID = ${_user!.uid}");
+
+      await _updateUserData(_user);
       _setLoading(false);
       return true;
     } catch (e) {
       _setLoading(false);
-      _setError(e.toString());
+      _setError("Google Sign-In failed: $e");
       return false;
     }
   }
@@ -113,7 +125,7 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _setLoading(false);
-      _setError(e.toString());
+      _setError("Phone verification failed: $e");
       return false;
     }
   }
@@ -136,7 +148,7 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _setLoading(false);
-      _setError(e.toString());
+      _setError("Phone linking failed: $e");
       return false;
     }
   }
@@ -153,16 +165,25 @@ class AuthProvider extends ChangeNotifier {
         smsCode: '000000',
       );
 
-      final UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
       _user = userCredential.user;
+
+      if (_user == null) {
+        _setLoading(false);
+        _setError("User ID cannot be found after phone sign-in.");
+        return false;
+      }
+
       _phoneNumberVerified = true;
       await _updateUserData(_user);
+
       _setLoading(false);
       return true;
     } catch (e) {
       _setLoading(false);
-      _setError(e.toString());
+      _setError("Phone Sign-In failed: $e");
       return false;
     }
   }
@@ -173,9 +194,9 @@ class AuthProvider extends ChangeNotifier {
       await _auth.signOut();
       _user = null;
       _phoneNumberVerified = false;
-      notifyListeners(); 
+      notifyListeners();
     } catch (e) {
-      _setError(e.toString());
+      _setError("Sign out failed: $e");
     }
   }
 

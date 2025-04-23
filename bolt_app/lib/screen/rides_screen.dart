@@ -270,12 +270,12 @@ class _UserHomePageState extends State<UserHomePage> {
     }
   }
 
-  // Modified method for web support
+ 
   Future<Position?> _getCurrentPositionWithFallbacks() async {
-    // Web-specific settings
+    
     if (kIsWeb) {
       try {
-        // On web, we need to be more patient with the timeout
+      
         return await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 20),
@@ -284,7 +284,7 @@ class _UserHomePageState extends State<UserHomePage> {
         print("Web high accuracy position failed: $e");
         
         try {
-          // Try with lowest accuracy on web
+          
           return await Geolocator.getCurrentPosition(
             desiredAccuracy: LocationAccuracy.lowest,
             timeLimit: Duration(seconds: 15),
@@ -295,7 +295,7 @@ class _UserHomePageState extends State<UserHomePage> {
         }
       }
     } else {
-      // Mobile fallback logic
+    
       try {
         return await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
@@ -355,7 +355,7 @@ class _UserHomePageState extends State<UserHomePage> {
       _animateToCurrentLocation();
     }
     
-    // Debug for web users
+    
     if (kIsWeb) {
       print("Web location: ${position.latitude}, ${position.longitude}, accuracy: ${position.accuracy}m");
     }
@@ -367,7 +367,7 @@ class _UserHomePageState extends State<UserHomePage> {
         currentAddress = "Fetching address...";
       });
 
-      // For web, we might need a longer timeout
+      
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
@@ -430,7 +430,7 @@ class _UserHomePageState extends State<UserHomePage> {
     setState(() {
       _markers.clear();
 
-      // User marker with exact coordinates shown in the info window
+    
       _markers.add(
         Marker(
           markerId: MarkerId('user'),
@@ -757,7 +757,7 @@ class _UserHomePageState extends State<UserHomePage> {
         children: [
           Expanded(flex: 1, child: _buildMapView()),
 
-          // Location info with more detailed accuracy information
+        
           Container(
             padding: EdgeInsets.all(16),
             color: Colors.grey[200],
@@ -779,7 +779,7 @@ class _UserHomePageState extends State<UserHomePage> {
                     "Coordinates: ${coordFormat.format(currentPosition!.latitude)}, ${coordFormat.format(currentPosition!.longitude)}",
                     style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                   ),
-                  // Add accuracy information which is helpful for web debugging
+
                   Text(
                     "Accuracy: ±${currentPosition!.accuracy.toStringAsFixed(1)} meters",
                     style: TextStyle(fontSize: 12, color: Colors.grey[700]),
@@ -934,7 +934,7 @@ class _UserHomePageState extends State<UserHomePage> {
               }
             },
           ),
-          // Add a new button specifically for web users to get high accuracy
+         
           if (kIsWeb)
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
